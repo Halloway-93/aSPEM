@@ -412,7 +412,7 @@ def run_trial(numberOfTrials, trial_index,p_green=0.9,p_red=0.10):
     print("the button position is:",button_pos)
 
     
-    while (not dummy_mode) & (trial_index == 50 or trial_index == 100 or trial_index==150 or trial_index==200): 
+    while (not dummy_mode) & (trial_index == 5 or trial_index == 100 or trial_index==150 or trial_index==200): 
         # terminate the task if no longer connected to the tracker or
         # user pressed Ctrl-C to terminate the task
         if (not el_tracker.isConnected()) or el_tracker.breakPressed():
@@ -473,6 +473,10 @@ def run_trial(numberOfTrials, trial_index,p_green=0.9,p_red=0.10):
     green_band_y = vertDirection * int(win.size[1] / 8)
     red_band_y = -vertDirection * (int(win.size[1] / 8))
 
+    print("the Y pos of the green band",green_band_y)
+    print("the Y pos of the red band",red_band_y)
+    
+
 
 
     # Initialize RDK stimuli coherence and direction with default values
@@ -521,7 +525,23 @@ def run_trial(numberOfTrials, trial_index,p_green=0.9,p_red=0.10):
     win.flip()
     el_tracker.sendMessage('TargetOnSet')
     #This waiting time will be replaced by the time of the end of the saccade+200ms
-    core.wait(1)#Wait 1000 ms before moving 
+    #Getting the gaze position
+    if not dummy_mode:
+        sample = el_tracker.getNewestSample()
+        rightY = sample.getRightEye().getGaze().get(1)
+        if chosen_color == 'g':
+            while rightY > green_band_y +40 or rightY < green_band_y -40:
+                sample = el_tracker.getNewestSample()
+                rightY = sample.getRightEye().getGaze().get(1)
+                core.wait(0.001)
+        else:
+            while rightY < red_band_y-40 or rightY > red_band_y+40:
+                sample = el_tracker.getNewestSample()
+                rightY = sample.getRightEye().getGaze().get(1)
+                core.wait(0.001)
+        core.wait(0.2) #wait 200ms before moving
+    else:
+        core.wait(1)#Wait 1000 ms before moving 
 
 
 
