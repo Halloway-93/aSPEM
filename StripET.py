@@ -527,20 +527,21 @@ def run_trial(numberOfTrials, trial_index,p_green=0.9,p_red=0.10):
     #This waiting time will be replaced by the time of the end of the saccade+200ms
     #Getting the gaze position
     if not dummy_mode:
-        #getting the gaze position
-        sample = el_tracker.getNewestSample()
+        #getting the eye position
+        sample= el_tracker.getNextData()
+        print("the sample is:",sample)
         #getting the Y position of the right eye
-        rightY = sample.getRightEye().getGaze().get(1)
+        rightY = sample.getRightEye().getGazeY()
         print("the gaze position is:",rightY)
         if chosen_color == 'g':
             while rightY > green_band_y +40 or rightY < green_band_y -40:
-                sample = el_tracker.getNewestSample()
-                rightY = sample.getRightEye().getGaze().get(1)
+                sample = el_tracker.getNextData()
+                rightY = sample.getRightEye().getGazeY()
                 core.wait(0.001)
         else:
             while rightY < red_band_y-40 or rightY > red_band_y+40:
-                sample = el_tracker.getNewestSample()
-                rightY = sample.getRightEye().getGaze().get(1)
+                sample = el_tracker.getNextData()
+                rightY = sample.getRightEye().getGazeY()
                 core.wait(0.001)
         core.wait(0.2) #wait 200ms before moving
     else:
