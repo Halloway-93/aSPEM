@@ -34,7 +34,7 @@ logging.console.setLevel(logging.CRITICAL)
 use_retina = False
 
 # Set this variable to True to run the script in "Dummy Mode"
-dummy_mode = True
+dummy_mode = False
 
 # Set this variable to True to run the task in full screen mode
 # It is easier to debug the script in non-fullscreen mode
@@ -527,8 +527,11 @@ def run_trial(numberOfTrials, trial_index,p_green=0.9,p_red=0.10):
     #This waiting time will be replaced by the time of the end of the saccade+200ms
     #Getting the gaze position
     if not dummy_mode:
+        #getting the gaze position
         sample = el_tracker.getNewestSample()
+        #getting the Y position of the right eye
         rightY = sample.getRightEye().getGaze().get(1)
+        print("the gaze position is:",rightY)
         if chosen_color == 'g':
             while rightY > green_band_y +40 or rightY < green_band_y -40:
                 sample = el_tracker.getNewestSample()
