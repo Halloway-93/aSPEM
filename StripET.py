@@ -450,22 +450,31 @@ def run_trial(numberOfTrials, trial_index,p_green=0.9,p_red=0.10):
     red_button.draw()
     win.flip()
     el_tracker.sendMessage('cue_selection')
-    
+    #cue onset time
+    cue_onset = core.getTime()
+    RT = -1  # keep track of the response time
     # Wait for the user to press the upper arrow key ('up') or donw arrow key ('down')
-    
     chosen_color = None
     while chosen_color not in ['up', 'down']:
         keys = event.waitKeys(keyList=['up', 'down'])
         if keys:
             chosen_color = keys[0]
+            el_tracker.sendMessage('cue_selected')
+            # get response time in ms, PsychoPy report time in sec
+            RT = int((core.getTime() - cue_onset)*1000)
+        # present the cues for a maximum of 5 seconds
+        if core.getTime() - cue_onset >= 5.0:
+            el_tracker.sendMessage('time_out')
+            break
 
+    el_tracker.sendMessage("reaction time: ",RT)
     # Map the keypresses to color choices
     if chosen_color == button_pos:
         chosen_color = 'g'
     else:
         chosen_color = 'r'
     
-    print("the chosen color is:",chosen_color)
+    print("The chosen color is:",chosen_color)
     
 
     # Calculate the positions for the upper and lower bands
@@ -598,7 +607,7 @@ def run_trial(numberOfTrials, trial_index,p_green=0.9,p_red=0.10):
                             g_x, g_y = new_sample.getRightEye().getGaze()
                         if eye_used == 0 and new_sample.isLeftSample():
                             g_x, g_y = new_sample.getLeftEye().getGaze()
-
+                        
                         # break the while loop if the current gaze position is
                         # within 80 pixel of the strip with the chosen color
                         if chosen_color == 'g':
@@ -606,7 +615,7 @@ def run_trial(numberOfTrials, trial_index,p_green=0.9,p_red=0.10):
                         else:
                             fix_y = red_band_y
 
-                        if fabs(g_y - fix_y) <= 40 or fabs(g_y - fix_y) >= -40:
+                        if fabs(g_y - fix_y) <= 40:
                             # record gaze start time
                             if not in_hit_region:
                                 if gaze_start == -1:
@@ -620,6 +629,7 @@ def run_trial(numberOfTrials, trial_index,p_green=0.9,p_red=0.10):
                         else:  # gaze outside the hit region, reset variables
                             in_hit_region = False
                             gaze_start = -1
+                            #core.wait(.001)
 
                 # update the "old_sample"
                 old_sample = new_sample
