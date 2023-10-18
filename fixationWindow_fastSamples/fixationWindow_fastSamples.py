@@ -64,7 +64,7 @@ logging.console.setLevel(logging.CRITICAL)
 use_retina = False
 
 # Set this variable to True to run the script in "Dummy Mode"
-dummy_mode = False
+dummy_mode = True
 
 # Set this variable to True to run the task in full screen mode
 # It is easier to debug the script in non-fullscreen mode
