@@ -16,6 +16,7 @@ from scipy import stats
 import pyglet
 import pylink
 from screeninfo import get_monitors
+from math import fabs
 
 # Switch to the script folder
 script_path = os.path.dirname(sys.argv[0])
@@ -531,7 +532,107 @@ def run_trial(numberOfTrials, trial_index,p_up=0.9,p_down=0.1):
     win.flip()
     el_tracker.sendMessage('TargetOnSet')
     #This waiting time will be replaced by the time of the end of the saccade+200ms
-    core.wait(1)#Wait 1000 ms before moving 
+    #Getting the gaze position
+    eye_used = el_tracker.eyeAvailable()
+    if eye_used == 1:
+        el_tracker.sendMessage("EYE_USED 1 RIGHT")
+    elif eye_used == 0 or eye_used == 2:
+        el_tracker.sendMessage("EYE_USED 0 LEFT")
+        eye_used = 0
+    else:
+        print("Error in getting the eye information!")
+        return pylink.TRIAL_ERROR
+    if not dummy_mode:
+        event.clearEvents()  # clear cached PsychoPy events
+        new_sample = None
+        old_sample = None
+        trigger_fired = False
+        in_hit_region = False
+        trigger_start_time = core.getTime()
+        # fire the trigger following a 200-ms gaze
+        minimum_duration = 0.2
+        gaze_start = -1
+        while not trigger_fired:
+            # abort the current trial if the tracker is no longer recording
+            error = el_tracker.isRecording()
+            if error is not pylink.TRIAL_OK:
+                el_tracker.sendMessage('tracker_disconnected')
+                abort_trial()
+                return error
+
+            # if the trigger did not fire in 10 seconds, abort trial
+            if core.getTime() - trigger_start_time >= 10.0:
+                el_tracker.sendMessage('trigger_timeout_recal')
+                # re-calibrate in the following trial
+                should_recal = 'yes'
+                # abort trial
+                abort_trial()
+                return should_recal
+
+            # check for keyboard events, skip a trial if ESCAPE is pressed
+            # terminate the task is Ctrl-C is pressed
+            for keycode, modifier in event.getKeys(modifiers=True):
+                # Abort a trial and recalibrate if "ESCAPE" is pressed
+                if keycode == 'escape':
+                    el_tracker.sendMessage('abort_and_recal')
+                    # re-calibrate in the following trial
+                    should_recal = 'yes'
+                    # abort trial
+                    abort_trial()
+                    return should_recal
+
+                # Terminate the task if Ctrl-c
+                if keycode == 'c' and (modifier['ctrl'] is True):
+                    el_tracker.sendMessage('terminated_by_user')
+                    terminate_task()
+                    return pylink.ABORT_EXPT
+
+            # Do we have a sample in the sample buffer?
+            # and does it differ from the one we've seen before?
+            new_sample = el_tracker.getNewestSample()
+            if new_sample is not None:
+                if old_sample is not None:
+                    if new_sample.getTime() != old_sample.getTime():
+                        # check if the new sample has data for the eye
+                        # currently being tracked; if so, we retrieve the current
+                        # gaze position and PPD (how many pixels correspond to 1
+                        # deg of visual angle, at the current gaze position)
+                        if eye_used == 1 and new_sample.isRightSample():
+                            g_x, g_y = new_sample.getRightEye().getGaze()
+                        if eye_used == 0 and new_sample.isLeftSample():
+                            g_x, g_y = new_sample.getLeftEye().getGaze()
+                        
+                        # break the while loop if the current gaze position is
+                        # within 80 pixel of the strip with the chosen color
+                        if chosen_arrow == 'up':
+                            fix_y =  upper_rdk.pos[1]
+                        else:
+                            fix_y =  lower_rdk.pos[1]
+                        #converting the fix_y to eylink coordinates
+                        fix_y = int(scn_height / 2) - fix_y
+                        if fabs(g_y - fix_y) <= 40:
+                            # record gaze start time
+                            if not in_hit_region:
+                                if gaze_start == -1:
+                                    gaze_start = core.getTime()
+                                    in_hit_region = True
+                            # check the gaze duration and fire
+                            if in_hit_region:
+                                gaze_dur = core.getTime() - gaze_start
+                                if gaze_dur > minimum_duration:
+                                    trigger_fired = True
+                        else:  # gaze outside the hit region, reset variables
+                            in_hit_region = False
+                            gaze_start = -1
+                            #core.wait(.001)
+
+                # update the "old_sample"
+                old_sample = new_sample
+
+    else:
+        core.wait(1)#Wait 1000 ms before moving 
+
+ 
 
 
 

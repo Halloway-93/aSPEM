@@ -623,7 +623,9 @@ def run_trial(numberOfTrials, trial_index,p_green=0.9,p_red=0.10):
                         else:
                             fix_y = red_band_y
                         #converting the fix_y to eylink coordinates
+
                         fix_y = int(scn_height / 2) - fix_y
+                        
                         if fabs(g_y - fix_y) <= 40:
                             # record gaze start time
                             if not in_hit_region:
