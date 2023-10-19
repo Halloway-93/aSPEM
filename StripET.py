@@ -35,7 +35,7 @@ logging.console.setLevel(logging.CRITICAL)
 use_retina = False
 
 # Set this variable to True to run the script in "Dummy Mode"
-dummy_mode = False
+dummy_mode = True
 
 # Set this variable to True to run the task in full screen mode
 # It is easier to debug the script in non-fullscreen mode
@@ -216,6 +216,9 @@ if 'Darwin' in platform.system():
         scn_width = int(scn_width/2.0)
         scn_height = int(scn_height/2.0)
 
+print ("Width & Height",scn_width,scn_height)
+
+
 # Pass the display pixel coordinates (left, top, right, bottom) to the tracker
 # see the EyeLink Installation Guide, "Customizing Screen Settings"
 el_coords = "screen_pixel_coords = 0 0 %d %d" % (scn_width - 1, scn_height - 1)
@@ -357,6 +360,11 @@ def abort_trial():
 
     return pylink.TRIAL_ERROR
 
+# Conversion from PsyChopy coordinates to EyeLink coordinates
+
+def psychopy_to_el_coordinates(x, y):
+    return (int(scn_width / 2) + x, int(scn_height / 2) - y)
+
 
 def run_trial(numberOfTrials, trial_index,p_green=0.9,p_red=0.10):
     """ Helper function specifying the events that will occur in a single trial
@@ -491,9 +499,9 @@ def run_trial(numberOfTrials, trial_index,p_green=0.9,p_red=0.10):
 
     # Initialize RDK stimuli coherence and direction with default values
     upper_rdk = visual.DotStim(win, nDots=num_dots, dotSize=5, fieldSize=(band_width_px, band_height_px), dotLife=30,
-                            color=(0,1,0), coherence=0, dir=0, fieldPos=(0, green_band_y),speed=1)
+                            color=(0,200,0), coherence=0, dir=0, fieldPos=(0, green_band_y),speed=1)
     lower_rdk = visual.DotStim(win, nDots=num_dots, dotSize=5, fieldSize=(band_width_px, band_height_px), dotLife=30,
-                            color=(1,0,0), coherence=0, dir=0, fieldPos=(0, red_band_y),speed=1)
+                            color=(200,0,0), coherence=0, dir=0, fieldPos=(0, red_band_y),speed=1)
 
 
     
@@ -614,7 +622,8 @@ def run_trial(numberOfTrials, trial_index,p_green=0.9,p_red=0.10):
                             fix_y =  green_band_y
                         else:
                             fix_y = red_band_y
-
+                        #converting the fix_y to eylink coordinates
+                        fix_y = int(scn_height / 2) - fix_y
                         if fabs(g_y - fix_y) <= 40:
                             # record gaze start time
                             if not in_hit_region:
