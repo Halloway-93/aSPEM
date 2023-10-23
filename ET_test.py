@@ -44,7 +44,6 @@ eyelink_tracker.doTrackerSetup()
 # Number of trials
 Ntrials = 5
 
-
 for trial in range(Ntrials):
 
     # Start recording eye data
