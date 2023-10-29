@@ -9,7 +9,6 @@ import time
 import sys
 from EyeLinkCoreGraphicsPsychoPy import EyeLinkCoreGraphicsPsychoPy
 from psychopy import visual, core, event, monitors, gui
-from math import pi
 from string import ascii_letters, digits
 import random
 from scipy import stats
@@ -242,8 +241,7 @@ genv.setPictureTarget(os.path.join('picture',"images","fixTarget.bmp"))
 
 # Configure the size of the calibration target (in pixels)
 # this option applies only to "circle" and "spiral" targets
-#genv.setTargetSize(24)
-
+#genv.setTargetSize(24) def su
 # Beeps to play during calibration, validation and drift correction
 # parameters: target, good, error
 #     target -- sound to play when target moves
