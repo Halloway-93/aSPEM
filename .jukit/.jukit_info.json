@@ -1,1 +1,1 @@
-{"cmd": "\nl=df[['proba','name','meanVeloBias','meanVeloNoBias','stdVeloBias','stdVeloNoBias', 'meanPosBias','meanPosNoBias','stdPosBias','stdPosNoBias']].groupby([\"name\",\"proba\"]).mean()\nl.reset_index(inplace=True)\nl\n", "cmd_opts": " --cell_id=e5cxOeyJ7B -s", "import_complete": 1, "terminal": "nvimterm"}
+{"cmd": "\n#Statistical test on the No Bias\nstats.ttest_ind(ddNB[ddNB.SD==-1].MV,ddNB[ddNB.SD==1].MV)\n", "cmd_opts": " --cell_id=YmX0AETsAW -s", "import_complete": 1, "terminal": "nvimterm"}

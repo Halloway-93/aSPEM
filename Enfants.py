@@ -543,9 +543,9 @@ for f in allPaths[2]:
     
          
     ###Getting the trials where the saccades happends inside the time window. 0 and 80ms.
-    trialSacc=Sacc[(Sacc.stime >= -300) & (Sacc.etime <80) & (Sacc.eye=='R')]["trial"].values
+    trialSacc=Sacc[(Sacc.stime >= 0) & (Sacc.etime <80) & (Sacc.eye=='R')]["trial"].values
     
-    saccDir=np.sign((Sacc[(Sacc.stime >= -300) & (Sacc.etime < 80) &  (Sacc.eye == 'R')].exp - Sacc[(Sacc.stime >=-300) & (Sacc.etime < 80)  &  (Sacc.eye == 'R')].sxp).values)
+    saccDir=np.sign((Sacc[(Sacc.stime >= 0) & (Sacc.etime < 80) &  (Sacc.eye == 'R')].exp - Sacc[(Sacc.stime >=0) & (Sacc.etime < 80)  &  (Sacc.eye == 'R')].sxp).values)
         
   
     for t in Sacc.trial.unique():
@@ -697,7 +697,7 @@ Sacc
 
 # |%%--%%| <kOIJIpx1dB|weXSK2Ej72>
 
-Sacc[(Sacc.stime > -300) & (Sacc.etime < 80)  &  (Sacc.eye == 'R')]["dur"].values
+Sacc[(Sacc.stime > 0) & (Sacc.etime < 80)  &  (Sacc.eye == 'R')]["dur"].values
 
 # |%%--%%| <weXSK2Ej72|NtyyoHtUc0>
 
@@ -780,11 +780,9 @@ df = pd.read_csv('Enfants.csv')
 
 df.head()
 
-# |%%--%%| <5fkZvrQTLZ|80OLOByszQ>
-
 df.meanPos[0]
 
-# |%%--%%| <80OLOByszQ|S8KgHmTcm2>
+# |%%--%%| <5fkZvrQTLZ|S8KgHmTcm2>
 
 # Deserialize columns with lists/arrays back to their original data type
 for col in list_columns:
@@ -1145,7 +1143,6 @@ axs[0, 0].set_xlabel('meanPosBias')
 axs[0, 0].set_title('Position', pad=20)
 axs[0, 1].scatter(df[df.proba==.7].meanVeloBias,df[df.proba==.7].stdVeloBias,label='Bias')
 axs[0, 1].scatter(df[df.proba==.7].meanVeloNoBias,df[df.proba==.7].stdVeloNoBias,label=' NoBias')
-
 axs[0, 1].set_title('Velocity', pad=20)
 axs[0, 1].set_xlabel('meanVeloBias')
 axs[0, 1].set_ylabel('stdVeloBias')
@@ -1284,66 +1281,119 @@ df.head()
 
 # |%%--%%| <TPjMUoGa5K|L4x2I3V0oj>
 
-df_filtered = df[df['SaccDirection'].apply(len) > 0][['meanVelo','SaccDirection','SaccTrial','tgt_direction','switch']]
-df_filtered
+df_filtered = df[(df['SaccDirection'].apply(len) > 0) & (df.proba==1)][['meanPos','meanVelo','SaccDirection','SaccTrial','tgt_direction','switch']]
+# df_filtered.head()
+# df_filtered
+# |%%--%%| <L4x2I3V0oj|1841MmmHhq>
 
-# |%%--%%| <L4x2I3V0oj|9fptYFngNr>
+def filter_values_bias(row):
+    return [val for val in row['SaccTrial'] if val >= row['switch']]
+    
+def filter_values_non_bias(row):
+    return [val for val in row['SaccTrial'] if val < row['switch']]
+    
 
-df_filtered.meanVelo[0]
+# |%%--%%| <1841MmmHhq|8Hfk9TtKK1>
 
-# |%%--%%| <9fptYFngNr|rdSax2D8ZX>
+df_filtered['SaccTrialBias']=df_filtered.apply(filter_values_bias,axis=1)
+df_filtered['SaccTrialNoBias']=df_filtered.apply(filter_values_non_bias,axis=1)
+df_filtered.SaccTrialNoBias.values[0]
+# |%%--%%| <8Hfk9TtKK1|9fptYFngNr>
 
-def extract_values(row):
-    sacc_trial_indices = [int(idx) - 1 for idx in row['SaccTrial']]
+# df_filtered.meanVelo.iloc[0]
+df_filtered['nBias']=df_filtered.SaccTrialBias.apply(len).values  
+df_filtered['nNonBias']=df_filtered.SaccTrialNoBias.apply(len).values
+df_filtered['SaccDirectionBias']=df_filtered.apply(lambda row: row['SaccDirection'][row['nNonBias']:],axis=1)
+df_filtered['SaccDirectionNoBias']=df_filtered.apply(lambda row: row['SaccDirection'][:row['nNonBias']],axis=1)
+df_filtered.nNonBias.values[0]
+#|%%--%%| <9fptYFngNr|LZSxFSgbJs>
+#Uncomment this to see the values
+# len(df_filtered.SaccDirectionBias.values[0])
+# [len(df_filtered.SaccDirectionNoBias.values[i])for i in range(len(df_filtered))]
+
+#|%%--%%| <LZSxFSgbJs|RgVRFbKA0c>
+# [len(df_filtered.SaccTrialNoBias.values[i])for i in range(len(df_filtered))]==[len(df_filtered.SaccDirectionNoBias.values[i])for i in range(len(df_filtered))]
+
+# |%%--%%| <RgVRFbKA0c|rdSax2D8ZX>
+
+def extract_values(row,col):
+    sacc_trial_indices = [int(idx) - 1 for idx in row[col]]
     
     meanVelo_values = []
     tgt_direction_values = []
-
+    meanPosValues= []
     # Iterate through the indices and append the values
     for idx in sacc_trial_indices:
         #print(len(row['meanVelo']))
         if 0 <= idx < len(row['meanVelo']):
             meanVelo_values.append(row['meanVelo'][idx])
             tgt_direction_values.append(row['tgt_direction'][idx])
+            meanPosValues.append(row['meanPos'][idx])
         else:
             print(f"Invalid index {idx} for meanVelo")
-    return meanVelo_values, tgt_direction_values
+    return meanPosValues,meanVelo_values, tgt_direction_values
 
 # |%%--%%| <rdSax2D8ZX|wtXKsceXnX>
+result=df_filtered.apply(lambda row: extract_values(row,'SaccTrial'), axis=1)
+resultBias=df_filtered.apply(lambda row: extract_values(row,'SaccTrialBias'), axis=1)
+resultNoBias=df_filtered.apply(lambda row: extract_values(row,'SaccTrialNoBias'), axis=1)
+#|%%--%%| <wtXKsceXnX|wjml37vHj8>
 
-result=df_filtered.apply(extract_values, axis=1)
+# df_filtered.SaccDirection.values
 
-# |%%--%%| <wtXKsceXnX|oRA2NFGVKS>
+# |%%--%%| <wjml37vHj8|oRA2NFGVKS>
 
-result
+resultNoBias
 
 # |%%--%%| <oRA2NFGVKS|yu0KCz7WW9>
-
+POS = [value for sublist in [result.iloc[i][0] for i in range(len(result))] for value in sublist]
+MV = [value for sublist in [result.iloc[i][1] for i in range(len(result))] for value in sublist]
+TD = [value for sublist in [result.iloc[i][2] for i in range(len(result))] for value in sublist]
 # Extract and flatten the list of meanVelo_values
-MV = [value for sublist in [result.iloc[i][0] for i in range(len(result))] for value in sublist]
-TD = [value for sublist in [result.iloc[i][1] for i in range(len(result))] for value in sublist]
-
+POSB = [value for sublist in [resultBias.iloc[i][0] for i in range(len(resultBias))] for value in sublist]
+MVB = [value for sublist in [resultBias.iloc[i][1] for i in range(len(resultBias))] for value in sublist]
+TDB = [value for sublist in [resultBias.iloc[i][2] for i in range(len(resultBias))] for value in sublist]
+POSNB = [value for sublist in [resultNoBias.iloc[i][0] for i in range(len(resultNoBias))] for value in sublist]
+MVNB = [value for sublist in [resultNoBias.iloc[i][1] for i in range(len(resultNoBias))] for value in sublist]
+TDNB = [value for sublist in [resultNoBias.iloc[i][2] for i in range(len(resultNoBias))] for value in sublist]
 # |%%--%%| <yu0KCz7WW9|mX2Itr1fGW>
-
 SD=[value for sublist in  df_filtered.SaccDirection.values for value in sublist]
-
-# |%%--%%| <mX2Itr1fGW|w6qaV7lT5z>
-
-
-
-# |%%--%%| <w6qaV7lT5z|YdwwYJc9jy>
-
+SDB=[value for sublist in  df_filtered.SaccDirectionBias.values for value in sublist]
+SDNB=[value for sublist in  df_filtered.SaccDirectionNoBias.values for value in sublist]
+# |%%--%%| <mX2Itr1fGW|YdwwYJc9jy>
+dd=pd.DataFrame({'POS':POS,'MV':MV,'TD':TD,'SD':SD})
 # Create a DataFrame
-dd=pd.DataFrame({'MV':MV,'TD':TD,'SD':SD})
+ddB=pd.DataFrame({'POS':POSB,'MV':MVB,'TD':TDB,'SD':SDB})
+ddNB=pd.DataFrame({'POS':POSNB,'MV':MVNB,'TD':TDNB,'SD':SDNB})
 dd.dropna(inplace=True)
-dd
+ddB.dropna(inplace=True)    
+ddNB.dropna(inplace=True)    
 
 # |%%--%%| <YdwwYJc9jy|YZAj6SMUGa>
 
 # Plot MV as a function of SD
 sns.scatterplot(data=dd,x='SD',y='MV',hue='TD')
 
-# |%%--%%| <YZAj6SMUGa|bMmNzhETi8>
+#|%%--%%| <YZAj6SMUGa|jtsOOXMPHL>
+#Plot MV as a function of SD in Bias
+sns.scatterplot(data=ddB,x='SD',y='MV',hue='TD')
+
+#|%%--%%| <jtsOOXMPHL|ryWRzODAyc>
+#Plot MV as a function of SD in NoBias
+sns.scatterplot(data=ddNB,x='SD',y='MV',hue='TD')
+
+#|%%--%%| <ryWRzODAyc|7IWx4Ct6uL>
+
+#Statistical test on the Bias
+
+stats.ttest_ind(ddB[ddB.SD==-1].MV,ddB[ddB.SD==1].MV)
+
+#|%%--%%| <7IWx4Ct6uL|YmX0AETsAW>
+
+#Statistical test on the No Bias
+stats.ttest_ind(ddNB[ddNB.SD==-1].MV,ddNB[ddNB.SD==1].MV)
+
+# |%%--%%| <YmX0AETsAW|bMmNzhETi8>
 
 # Plot SD as a function of MV>0 and MV<0
 plt.scatter(dd[dd.MV>0].SD,dd[dd.MV>0].MV,label="MV>0",alpha=0.5)
@@ -1358,14 +1408,27 @@ plt.savefig("SaccadeDirectionEnfants")
 # Ration of the SD=1:
 len(dd[(dd.SD==1)& (dd.MV<0)])/len(dd[dd.MV<0].SD)
 
-# |%%--%%| <XyvHdcGdD3|SgfUNmGyYo>
+# |%%--%%| <XyvHdcGdD3|RuF7KbQLaW>
+
+dd[(dd.SD==-1)& (dd.MV<0)]
+
+# |%%--%%| <RuF7KbQLaW|Xs7nl5cRIE>
+
+len(dd[dd.SD>0].SD)/len(dd.SD)
+
+# |%%--%%| <Xs7nl5cRIE|SgfUNmGyYo>
 
 #Statistical test
 stats.ttest_ind(dd[dd.SD==-1].MV,dd[dd.SD==1].MV)
 
 # |%%--%%| <SgfUNmGyYo|tbId1xKfrs>
 
-
+plt.scatter(dd.MV,dd.SD,label="MV>0",alpha=0.5)
+#plt.scatter(dd[dd.MV<0].SD,dd[dd.MV<0].MV,label="MV<0",alpha=0.5)
+plt.legend()
+plt.ylabel("Saccade Direction")
+plt.xlabel("Mean Velocity")
+plt.savefig("SaccadeDirectionEnfants")
 
 # |%%--%%| <tbId1xKfrs|v3KL0BX6xe>
 
@@ -1381,11 +1444,7 @@ sns.histplot(data=dd,x='SD',hue='TD')
 
 len(dd[(dd.MV>0) & (dd.SD<0)])
 
-# |%%--%%| <oUq0kXuGw1|IJ45kDsYHB>
-r"""°°°
-### Xarray part
-°°°"""
-# |%%--%%| <IJ45kDsYHB|Vc7pjBJDQP>
+# |%%--%%| <oUq0kXuGw1|Vc7pjBJDQP>
 
 len(dd[(dd.MV<0) & (dd.SD>0)])
 
@@ -1403,28 +1462,5 @@ len(dd[(dd.MV<0) & (dd.SD<0)])
 
 # |%%--%%| <Cu13S87YDz|Si0dq9rFgb>
 
-
-
-# |%%--%%| <Si0dq9rFgb|NlSAp1fSZ0>
-
-
-
-# |%%--%%| <NlSAp1fSZ0|z63JFDeWbv>
-
-
-
-# |%%--%%| <z63JFDeWbv|L4Giu9SrEz>
-
-
-
-# |%%--%%| <L4Giu9SrEz|lcMPDILADd>
-
-
-
-# |%%--%%| <lcMPDILADd|NtXjfhUUnA>
-
-
-
-# |%%--%%| <NtXjfhUUnA|T2wcaIU58h>
 
 
