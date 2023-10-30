@@ -1,0 +1,1 @@
+{"cmd": "\nl=df[['proba','name','meanVeloBias','meanVeloNoBias','stdVeloBias','stdVeloNoBias', 'meanPosBias','meanPosNoBias','stdPosBias','stdPosNoBias']].groupby([\"name\",\"proba\"]).mean()\nl.reset_index(inplace=True)\nl\n", "cmd_opts": " --cell_id=e5cxOeyJ7B -s", "import_complete": 1, "terminal": "nvimterm"}

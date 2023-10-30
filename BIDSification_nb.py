@@ -2,7 +2,7 @@
 import BIDSification_eyetrackingData as BIDS
 
 # %%
-path_oldData = '../Data_ASC' # Path of the data directory to BIDSified
+path_oldData = '/Users/hamzahalloway/Nextcloud/Shared/HAMZA_PhD/Data/Probant_DevAsd/DATA/Controles/' # Path of the data directory to BIDSified
 
 # %%
 """
@@ -70,11 +70,10 @@ you need to install pandas, open a terminal and run the command:
 import pandas as pd
 
 # %%
-infoFiles = pd.read_csv('../Data_ASC/infoFiles.tsv', delimiter=' ') # open
-
+infoFiles = pd.read_csv('/Users/hamzahalloway/Nextcloud/Shared/HAMZA_PhD/Data/Probant_DevAsd/DATA/Controles/infoFiles.tsv', delimiter=' ') # open
 # %%
 infoFiles
-
+infoFiles.ses
 # %%
 for name in infoFiles.filename:
     infoFiles.loc[infoFiles.filename==name, 'participant_id'] = "{:03d}".format(int(name[1]))
@@ -85,7 +84,7 @@ for name in infoFiles.filename:
 infoFiles
 
 # %%
-infoFiles.to_csv('../Data_ASC/infoFiles.tsv', sep=' ') # save
+infoFiles.to_csv('/Users/hamzahalloway/Nextcloud/Shared/HAMZA_PhD/Data/Probant_DevAsd/DATA/Controles/infoFiles.tsv', sep=' ') # save
 
 # %%
 """
@@ -128,7 +127,7 @@ You MUST complete the following keys:
 """
 
 # %%
-settings = pd.read_json('../Data_ASC/settings.json', orient='index').T # open
+settings = pd.read_json('/Users/hamzahalloway/Nextcloud/Shared/HAMZA_PhD/Data/Probant_DevAsd/DATA/Controles//settings.json', orient='index').T # open
 
 # %%
 settings
