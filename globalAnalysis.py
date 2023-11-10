@@ -1,4 +1,5 @@
 import io
+import os
 import json
 import re
 import warnings
@@ -70,7 +71,7 @@ def process_blinks(blinks, blocks):
 def process_messages(msgs, blocks):
     # Process messages from tracker
     msg_mat = [msg.split(" ", 1) for msg in msgs]
-    msg_mat = [[msg[0][4:], msg[1]] for msg in msg_mat]
+    msg_mat = [[msg[0][4:], msg[1].rstrip()] for msg in msg_mat]
     msg_df = pd.DataFrame(msg_mat, columns=["time", "text"])
     msg_df["time"] = pd.to_numeric(msg_df["time"])
 
@@ -473,40 +474,84 @@ def read_asc(fname, samples=True, events=True, parse_all=False):
     return out, np.array(bias, dtype="int"), np.array(direct, dtype="int") % 2
 
 
-path = "/Volumes/oueld-kadd.h/Shared/HAMZA_PhD/Data/Probant_DevAsd/DATA/Controles/"
 
-categories = np.sort([f for f in listdir(path)])
-namesCat = []
-for cat in categories:
-    namesCat.append(np.sort([f for f in listdir(path + cat)]))
-
-
-allFiles = []
-
-for nameCat, cat in zip(namesCat, categories):
-    filesCat = []
-    for name in nameCat:
-        files = np.sort([f for f in listdir(path + cat + "/" + name)])
-        filesCat.append(files)
-    allFiles.append(filesCat)
+def get_bad_trials(df):
+    badTrials=[]
+    for t in np.unique(df.trial):
+        l=len(df[(df.time>=80) & (df.time<=120) & (df.trial==t) ])
+        if l==0:
+            badTrials.append(t)
+            
+    return badTrials
 
 
+def drop_bad_trials(df,badTrials):
+    """Drop the bad trials from a DataFrame.
+
+    Args:
+        df: A DataFrame.
+        badTrials: A list of the bad trials.
+
+    Returns:
+        A DataFrame with the bad trials dropped.
+    """
+    return df[~df['trial'].isin(badTrials)]
+
+
+
+path = "/Users/hamzahalloway/Nextcloud/Shared/HAMZA_PhD/Data/Probant_DevAsd/DATA/Controles/"
+
+# categories = np.sort([f for f in listdir(path)])
+# namesCat = []
+# for cat in categories:
+#     namesCat.append(np.sort([f for f in listdir(path + cat)]))
+#
+#
+# allFiles = []
+#
+# for nameCat, cat in zip(namesCat, categories):
+#     filesCat = []
+#     for name in nameCat:
+#         files = np.sort([f for f in listdir(path + cat + "/" + name)])
+#         filesCat.append(files)
+#     allFiles.append(filesCat)
+#
+#
+# allPaths = []
+# for cat, names, conditions in zip(categories, namesCat, allFiles):
+#     catPaths = []
+#     for name, namecond in zip(names, conditions):
+#         for condition in namecond:
+#             catPaths.append(path + cat + "/" + name + "/" + condition)
+#     allPaths.append(catPaths)
+#
+categories = sorted(os.listdir(path))
 allPaths = []
-for cat, names, conditions in zip(categories, namesCat, allFiles):
-    catPaths = []
-    for name, namecond in zip(names, conditions):
-        for condition in namecond:
-            catPaths.append(path + cat + "/" + name + "/" + condition)
+categories
+subjects=[]
+for cat in categories:
+    catPath = os.path.join(path, cat)
+    namesCat = sorted(os.listdir(catPath))
+    catPaths = [os.path.join(catPath, name, condition) for name in namesCat for condition in sorted(os.listdir(os.path.join(catPath, name)))]
+    subjects.append([name for name in namesCat for condition in sorted(os.listdir(os.path.join(catPath, name)))])
     allPaths.append(catPaths)
 
+
+# |%%--%%| <U2MWnLLLwV|ArbOSJQbFM>
+
+len(subjects)
+
+# |%%--%%| <ArbOSJQbFM|hXqzQhq96H>
+
+subjects=[s for sub in subjects for s in sub]
+len(subjects)
+# |%%--%%| <hXqzQhq96H|oT7c8ZlHKg>
 
 meanPos = []
 stdPos = []
 
-
 meanVelo = []
 stdVelo = []
-
 
 switch = []
 
@@ -520,6 +565,7 @@ SACC= []
 SON=[]
 #Stimulus off
 SOFF=[]
+ZEROS=[]
 for path in allPaths:
     for f in path:
         data, bias, direct = read_asc(f)
@@ -552,19 +598,36 @@ for path in allPaths:
 
         # Messages from eyelink:
         MSG = data["msg"]
-        tON = MSG.loc[MSG.text == "StimulusOn\n", "time"]
-        t0 = MSG.loc[MSG.text == "StimulusOff\n", "time"]
-        Zero = MSG.loc[MSG.text == "TargetOn\n", ["trial", "time"]]
-        #Resetting t0 and tON
-        t0=t0.time.values-Zero.time.values
-        tON=tON.time.values-Zero.time.values
-        SON.append(tON)
-        SOFF.append(t0)
-        # resetting the time
+        tON = MSG.loc[MSG.text == "StimulusOn", ["trial", "time"]]
+        t0 = MSG.loc[MSG.text == "StimulusOff", ["trial", "time"]]
+        Zero = MSG.loc[MSG.text == "TargetOn", ["trial", "time"]]
+        
+        # Resetting the time
         for i in range(len(Zero)):
             df.loc[df["trial"] == i + 1, "time"] = (
-                df.loc[df["trial"] == i + 1, "time"] - Zero.time.values[i]
-            )
+                df.loc[df["trial"] == i + 1, "time"] - Zero.time.values[i])
+
+        #Getting rid of all the bad trials:
+        badTrials=get_bad_trials(df)
+        df=drop_bad_trials(df,badTrials)
+        Zero=drop_bad_trials(Zero,badTrials)
+        tON=drop_bad_trials(tON,badTrials)
+        t0=drop_bad_trials(t0,badTrials)
+        # Assuming 'trial' is the column containing trial information
+        common_trials = Zero['trial'].values
+        
+        # Filter 't0' and 'tON' in-place based on common trials
+        t0=t0[t0['trial'].isin(common_trials)]
+        tON=tON[tON['trial'].isin(common_trials)]
+
+        # perform the subtraction without the risk of shape mismatch
+        # t0['time'] = t0['time'].values - Zero['time'].values
+        # tON['time'] = tON['time'].values - Zero['time'].values
+
+        SON.append(tON.values)
+        SOFF.append(t0.values)
+        ZEROS.append(Zero)
+       
 
         # Getting the saccades:
         Sacc = data["sacc"]
@@ -575,6 +638,8 @@ for path in allPaths:
                 Sacc.loc[Sacc.trial == t, ["stime", "etime"]].values
                 - Zero.loc[Zero.trial == t, "time"].values
             )
+
+        Sacc=drop_bad_trials(Sacc,badTrials)
 
         # Getting the trials where the saccades happens inside the time window. 0 and 80ms.
         trialSacc = Sacc[(Sacc.stime >= -300) & (Sacc.etime < 80) & (Sacc.eye == "R")][
@@ -672,7 +737,7 @@ for path in allPaths:
                 trial_dim, time_dim
             )
             pos_before_mean = np.nanmean(pos_before_reshaped, axis=1)
-
+    
             velo = np.gradient(pos, axis=1) * 1000 / 30
             velo[(velo > 30) | (velo < -30)] = np.nan
 
@@ -711,6 +776,8 @@ for path in allPaths:
         SaccD.append(saccDir)
 
         SACC.append(Sacc)
+
+# |%%--%%| <oT7c8ZlHKg|IVcF9WqPuR>
 df = pd.DataFrame(
     {
         "meanPos": meanPos,
@@ -724,11 +791,133 @@ df = pd.DataFrame(
         "SaccTrial": TS,
         "StimuOn": SON,
         "StimuOff": SOFF,
+
     }
 )
-subjects = []
-for nc,af in zip(namesCat,allFiles):
-    for name, file in zip(nc, af):
-        for i in range(len(file)):
-            subjects.append(name)
+
 df["name"] = subjects
+df.head()
+
+# |%%--%%| <IVcF9WqPuR|a4slJKlDgS>
+
+df.StimuOn.values[0]
+len(df)
+# |%%--%%| <a4slJKlDgS|Vh3d8hgoy8>
+
+ZEROS
+
+# |%%--%%| <Vh3d8hgoy8|CaNTZRL8wx>
+
+[len(ZEROS[i]) for i in range(len(ZEROS))]
+
+# |%%--%%| <CaNTZRL8wx|XAPXQ8YAcD>
+
+len(ZEROS)
+
+# |%%--%%| <XAPXQ8YAcD|qwbnB72hYv>
+
+[len(df.meanVelo.iloc[i]) for i in range (len(df))]
+
+# |%%--%%| <qwbnB72hYv|RvONm0ao7t>
+
+# Calculate the mean for 'meanPos' starting from the corresponding 'switch'
+df["meanPosBias"] = df.apply(
+    lambda row: pd.Series(row["meanPos"][row["switch"] :]).mean(), axis=1
+)
+df["meanPosNoBias"] = df.apply(
+    lambda row: pd.Series(row["meanPos"][: row["switch"]]).mean(), axis=1
+)
+# Calculate the std for 'meanPos' starting from the corresponding 'switch'
+df["stdPosBias"] = df.apply(
+    lambda row: pd.Series(row["meanPos"][row["switch"] :]).std(), axis=1
+)
+df["stdPosNoBias"] = df.apply(
+    lambda row: pd.Series(row["meanPos"][: row["switch"]]).std(), axis=1
+)
+o |%%--%%| <RvONm0ao7t|cuQu0QVBqG>
+
+# Calculate the mean for 'meanPos' starting from theswitch
+df["meanVeloBias"] = df.apply(
+    lambda row: pd.Series(row["meanVelo"][row["switch"] :]).mean(), axis=1
+)
+df["meanVeloNoBias"] = df.apply(
+    lambda row: pd.Series(row["meanVelo"][: row["switch"]]).mean(), axis=1
+)
+
+# Calculate the mean for 'stdPos' for the bias portion and nonbias portion
+df["stdVeloBias"] = df.apply(
+    lambda row: pd.Series(row["meanVelo"][row["switch"] :]).std(), axis=1
+)
+df["stdVeloNoBias"] = df.apply(
+    lambda row: pd.Series(row["meanVelo"][: row["switch"]]).std(), axis=1
+)
+
+# |%%--%%| <cuQu0QVBqG|SYtDJWs71w>
+
+# Identify columns with lists or NumPy arrays
+list_columns = [col for col in df.columns if isinstance(df[col][0], (list, np.ndarray))]
+
+# Serialize columns with lists/arrays to JSON strings
+for col in list_columns:
+    if isinstance(df[col][0], np.ndarray):
+        df[col] = df[col].apply(lambda x: json.dumps(x.tolist()))
+    else:
+        df[col] = df[col].apply(json.dumps)
+
+# |%%--%%| <SYtDJWs71w|rqJJeOn4sA>
+
+# Save the DataFrame to a CSV file
+df.to_csv("global.csv", index=False)
+
+# |%%--%%| <rqJJeOn4sA|YqAoJAtx0X>
+
+# Read the CSV file
+list_columns = [
+    "meanPos",
+    "stdPos",
+    "meanVelo",
+    "stdVelo",
+    "tgt_direction",
+    "SaccDirection",
+    "SaccTrial",
+]
+df = pd.read_csv("global.csv")
+
+# |%%--%%| <YqAoJAtx0X|NGP8O5La8t>
+
+# Deserialize columns with lists/arrays back to their original data type
+for col in list_columns:
+    df[col] = df[col].apply(lambda x: json.loads(x) if isinstance(x, str) else x)
+
+# |%%--%%| <NGP8O5La8t|v4xewbGEH3>
+
+df.head()
+len(df)
+#|%%--%%| <v4xewbGEH3|2VzwETEHBU>
+
+l = (
+    df[
+        [
+            "proba",
+            "name",
+            "meanVeloBias",
+            "meanVeloNoBias",
+            "stdVeloBias",
+            "stdVeloNoBias",
+            "meanPosBias",
+            "meanPosNoBias",
+            "stdPosBias",
+            "stdPosNoBias",
+        ]
+    ]
+    .groupby(["name", "proba"])
+    .mean()
+)
+l.reset_index(inplace=True)
+l
+
+#|%%--%%| <2VzwETEHBU|M7zlvegmTt>
+
+
+sns.lmplot(data=l, x="proba", y="meanVeloBias")
+
