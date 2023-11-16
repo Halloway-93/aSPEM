@@ -1,3 +1,4 @@
+
 import io
 import os
 import json
@@ -536,7 +537,6 @@ for cat in categories:
     subjects.append([name for name in namesCat for condition in sorted(os.listdir(os.path.join(catPath, name)))])
     allPaths.append(catPaths)
 
-
 # |%%--%%| <U2MWnLLLwV|ArbOSJQbFM>
 
 len(subjects)
@@ -545,6 +545,7 @@ len(subjects)
 
 subjects=[s for sub in subjects for s in sub]
 len(subjects)
+
 # |%%--%%| <hXqzQhq96H|oT7c8ZlHKg>
 
 meanPos = []
@@ -778,6 +779,7 @@ for path in allPaths:
         SACC.append(Sacc)
 
 # |%%--%%| <oT7c8ZlHKg|IVcF9WqPuR>
+
 df = pd.DataFrame(
     {
         "meanPos": meanPos,
@@ -802,6 +804,7 @@ df.head()
 
 df.StimuOn.values[0]
 len(df)
+
 # |%%--%%| <a4slJKlDgS|Vh3d8hgoy8>
 
 ZEROS
@@ -834,7 +837,8 @@ df["stdPosBias"] = df.apply(
 df["stdPosNoBias"] = df.apply(
     lambda row: pd.Series(row["meanPos"][: row["switch"]]).std(), axis=1
 )
-o |%%--%%| <RvONm0ao7t|cuQu0QVBqG>
+
+# |%%--%%| <RvONm0ao7t|cuQu0QVBqG>
 
 # Calculate the mean for 'meanPos' starting from theswitch
 df["meanVeloBias"] = df.apply(
@@ -893,7 +897,8 @@ for col in list_columns:
 
 df.head()
 len(df)
-#|%%--%%| <v4xewbGEH3|2VzwETEHBU>
+
+# |%%--%%| <v4xewbGEH3|2VzwETEHBU>
 
 l = (
     df[
@@ -916,8 +921,315 @@ l = (
 l.reset_index(inplace=True)
 l
 
-#|%%--%%| <2VzwETEHBU|M7zlvegmTt>
-
+# |%%--%%| <2VzwETEHBU|M7zlvegmTt>
 
 sns.lmplot(data=l, x="proba", y="meanVeloBias")
+
+# |%%--%%| <M7zlvegmTt|iIbfrDNhzH>
+
+sns.lmplot(data=l, x="meanPosBias", y="stdPosBias", hue="proba", height=10)
+
+# |%%--%%| <iIbfrDNhzH|6G7ZSZsaBd>
+
+sns.lmplot(data=l, x="meanVeloBias", y="stdVeloBias", hue="proba", height=10)
+plt.savefig("corrVeloBiasGlobal")
+
+# |%%--%%| <6G7ZSZsaBd|VKPXlcFuYV>
+
+sns.lmplot(data=l, x="meanVeloNoBias", y="stdVeloNoBias", hue="proba", height=10)
+plt.savefig("corrVeloNoBiasGlobal")
+
+# |%%--%%| <VKPXlcFuYV|dk8jmtzQmL>
+
+sns.lmplot(data=l, x="meanPosBias", y="meanVeloBias", hue="proba", height=10)
+
+# |%%--%%| <dk8jmtzQmL|tEaZ44EaY3>
+
+Slope = []
+for n in np.unique(df.name):
+    slope, intercept, r_value, p_value, std_err = linregress(
+        df[df.name == n].proba, df[df.name == n].meanPosBias
+    )
+    plt.figure(figsize=(12, 6))
+    plt.scatter(df[df.name == n].proba, df[df.name == n].meanPosBias)
+    plt.title(n + ", slope=" + str("% 6.3f" % slope) + " p=" + str("% 6.3f" % p_value))
+    plt.xlabel("Proba")
+    plt.ylabel("meanPosBias Bias")
+
+    # Getting the slope
+    Slope.append(slope)
+
+    plt.plot(
+        df[df.name == n].proba,
+        df[df.name == n].proba * slope + intercept,
+        c="r",
+        alpha=0.5,
+    )
+    plt.show()
+
+# |%%--%%| <tEaZ44EaY3|lGTtjL6INS>
+
+ss = np.array(Slope)
+s = l.groupby("name").mean().stdPosNoBias.values
+
+# |%%--%%| <lGTtjL6INS|JcWtNDLVfH>
+
+plt.scatter(s, ss)
+plt.xlabel("stdPosNoBias")
+plt.ylabel("Slope")
+
+# |%%--%%| <JcWtNDLVfH|RQMtwk3Cis>
+
+Slope = []
+for n in np.unique(df.name):
+    slope, intercept, r_value, p_value, std_err = linregress(
+        df[df.name == n].proba, df[df.name == n].meanVeloBias
+    )
+    plt.figure(figsize=(12, 6))
+    plt.scatter(df[df.name == n].proba, df[df.name == n].meanVeloBias)
+    plt.title(n + ", slope=" + str("% 6.3f" % slope) + " p=" + str("% 6.3f" % p_value))
+    plt.xlabel("Proba")
+    plt.ylabel("meanVelo Bias")
+
+    # Getting the slope
+    Slope.append(slope)
+
+    plt.plot(
+        df[df.name == n].proba,
+        df[df.name == n].proba * slope + intercept,
+        c="r",
+        alpha=0.5,
+    )
+    plt.show()
+
+# |%%--%%| <RQMtwk3Cis|KK6xwsrsmO>
+
+ss = np.array(Slope)
+s = l.groupby("name").mean().stdVeloNoBias.values
+plt.scatter(s, ss)
+plt.xlabel("stdVeloNoBias")
+plt.ylabel("Slope")
+
+# |%%--%%| <KK6xwsrsmO|QVkrcdyzfn>
+
+# Create a figure with 3 rows and 2 columns
+fig, axs = plt.subplots(3, 2, figsize=(10, 10))
+
+# Plot your data or customize each subplot as needed
+axs[0, 0].scatter(
+    df[df.proba == 0.7]["meanPosBias"], df[df.proba == 0.7]["stdPosBias"], label="Bias"
+)
+axs[0, 0].scatter(
+    df[df.proba == 0.7]["meanPosNoBias"],
+    df[df.proba == 0.7]["stdPosNoBias"],
+    label="No Bias",
+)
+axs[0, 0].set_ylabel("Proba=0.7")
+axs[0, 0].set_xlabel("meanPosBias")
+axs[0, 0].set_title("Position", pad=20)
+axs[0, 1].scatter(
+    df[df.proba == 0.7].meanVeloBias, df[df.proba == 0.7].stdVeloBias, label="Bias"
+)
+axs[0, 1].scatter(
+    df[df.proba == 0.7].meanVeloNoBias,
+    df[df.proba == 0.7].stdVeloNoBias,
+    label=" NoBias",
+)
+axs[0, 1].set_title("Velocity", pad=20)
+axs[0, 1].set_xlabel("meanVeloBias")
+axs[0, 1].set_ylabel("stdVeloBias")
+axs[1, 0].scatter(
+    df[df.proba == 0.9].meanPosBias, df[df.proba == 0.9].stdPosBias, label="Bias"
+)
+axs[1, 0].scatter(
+    df[df.proba == 0.9].meanPosNoBias, df[df.proba == 0.9].stdPosNoBias, label="No Bias"
+)
+
+axs[1, 0].set_ylabel("Proba=0.9")
+axs[1, 1].scatter(
+    df[df.proba == 0.9].meanVeloBias, df[df.proba == 0.9].stdVeloBias, label="Bias"
+)
+axs[1, 1].scatter(
+    df[df.proba == 0.9].meanVeloNoBias,
+    df[df.proba == 0.9].stdVeloNoBias,
+    label="No Bias",
+)
+axs[1, 1].set_ylabel("stdVeloBias")
+
+
+axs[2, 0].scatter(
+    df[df.proba == 1].meanPosBias, df[df.proba == 1].stdPosBias, label="Bias"
+)
+axs[2, 0].scatter(
+    df[df.proba == 1].meanPosNoBias, df[df.proba == 1].stdPosNoBias, label="No Bias"
+)
+axs[2, 0].set_ylabel("Proba=1")
+
+axs[2, 1].scatter(
+    df[df.proba == 1].meanVeloBias, df[df.proba == 1].stdVeloBias, label="Bias"
+)
+axs[2, 1].scatter(
+    df[df.proba == 1].meanVeloNoBias, df[df.proba == 1].stdVeloNoBias, label="No Bias"
+)
+fig.suptitle(
+    "Correlation between the mean and the standard deviation\n of Velocity & Position for different Probabilities ",
+    fontsize=20,
+)
+
+# Add legends to each subplot
+for ax in axs.flatten():
+    ax.legend()
+
+fig.tight_layout()
+plt.savefig("CorrstdMeanProbasGlobal")
+
+# |%%--%%| <QVkrcdyzfn|Y8F87eDkFJ>
+
+# Create a figure with 3 rows and 2 columns
+fig, axs = plt.subplots(3, 2, figsize=(10, 10))
+# put the hue for the subjects
+# Plot your data or customize each subplot as needed
+slope, intercept, r_value, p_value, std_err = linregress(
+    df[(df.proba == 0.7) & (df.stdPosBias <= 20)]["meanPosBias"],
+    df[(df.proba == 0.7) & (df.stdPosBias <= 20)]["stdPosBias"],
+)
+axs[0, 0].scatter(
+    df[(df.proba == 0.7) & (df.stdPosBias <= 20)]["meanPosBias"],
+    df[(df.proba == 0.7) & (df.stdPosBias <= 20)]["stdPosBias"],
+)
+axs[0, 0].plot(
+    df[(df.proba == 0.7) & (df.stdPosBias <= 20)]["meanPosBias"],
+    df[(df.proba == 0.7) & (df.stdPosBias <= 20)]["meanPosBias"] * slope + intercept,
+    c="r",
+    alpha=0.5,
+)
+axs[0, 0].set_ylabel("Proba=0.7")
+axs[0, 0].set_xlabel("meanPosBias")
+axs[0, 0].set_title("Position" + " p=" + str("% 6.3f" % p_value), pad=20)
+
+slope, intercept, r_value, p_value, std_err = linregress(
+    df[(df.proba == 0.7) & (df.stdVeloBias <= 20)]["meanVeloBias"],
+    df[(df.proba == 0.7) & (df.stdVeloBias <= 20)]["stdVeloBias"],
+)
+axs[0, 1].scatter(
+    df[(df.proba == 0.7) & (df.stdPosBias <= 20)]["meanVeloBias"],
+    df[(df.proba == 0.7) & (df.stdPosBias <= 20)]["stdVeloBias"],
+)
+axs[0, 1].plot(
+    df[(df.proba == 0.7) & (df.stdPosBias <= 20)]["meanVeloBias"],
+    df[(df.proba == 0.7) & (df.stdPosBias <= 20)]["meanVeloBias"] * slope + intercept,
+    c="r",
+    alpha=0.5,
+)
+axs[0, 1].set_ylabel("stdVeloBias")
+axs[0, 1].set_xlabel("meanVeloBias")
+axs[0, 1].set_title("Velo" + " p=" + str("% 6.3f" % p_value), pad=20)
+
+slope, intercept, r_value, p_value, std_err = linregress(
+    df[(df.proba == 0.9) & (df.stdPosBias <= 20)]["meanPosBias"],
+    df[(df.proba == 0.9) & (df.stdPosBias <= 20)]["stdPosBias"],
+)
+axs[1, 0].scatter(
+    df[(df.proba == 0.9) & (df.stdPosBias <= 20)]["meanPosBias"],
+    df[(df.proba == 0.9) & (df.stdPosBias <= 20)]["stdPosBias"],
+)
+axs[1, 0].plot(
+    df[(df.proba == 0.9) & (df.stdPosBias <= 20)]["meanPosBias"],
+    df[(df.proba == 0.9) & (df.stdPosBias <= 20)]["meanPosBias"] * slope + intercept,
+    c="r",
+    alpha=0.5,
+)
+axs[1, 0].set_ylabel("Proba=0.9")
+axs[1, 0].set_xlabel("meanPosBias")
+axs[1, 0].set_title("Position" + " p=" + str("% 6.3f" % p_value), pad=20)
+
+slope, intercept, r_value, p_value, std_err = linregress(
+    df[(df.proba == 0.9) & (df.stdVeloBias <= 20)]["meanVeloBias"],
+    df[(df.proba == 0.9) & (df.stdVeloBias <= 20)]["stdVeloBias"],
+)
+axs[1, 1].scatter(
+    df[(df.proba == 0.9) & (df.stdPosBias <= 20)]["meanVeloBias"],
+    df[(df.proba == 0.9) & (df.stdPosBias <= 20)]["stdVeloBias"],
+)
+axs[1, 1].plot(
+    df[(df.proba == 0.9) & (df.stdPosBias <= 20)]["meanVeloBias"],
+    df[(df.proba == 0.9) & (df.stdPosBias <= 20)]["meanVeloBias"] * slope + intercept,
+    c="r",
+    alpha=0.5,
+)
+axs[1, 1].set_ylabel("stdVeloBias")
+axs[1, 1].set_xlabel("meanVeloBias")
+axs[1, 1].set_title("Velo" + " p=" + str("% 6.3f" % p_value), pad=20)
+
+
+slope, intercept, r_value, p_value, std_err = linregress(
+    df[(df.proba == 1) & (df.stdPosBias <= 20)]["meanPosBias"],
+    df[(df.proba == 1) & (df.stdPosBias <= 20)]["stdPosBias"],
+)
+axs[2, 0].scatter(
+    df[(df.proba == 1) & (df.stdPosBias <= 20)]["meanPosBias"],
+    df[(df.proba == 1) & (df.stdPosBias <= 20)]["stdPosBias"],
+)
+axs[2, 0].plot(
+    df[(df.proba == 1) & (df.stdPosBias <= 20)]["meanPosBias"],
+    df[(df.proba == 1) & (df.stdPosBias <= 20)]["meanPosBias"] * slope + intercept,
+    c="r",
+    alpha=0.5,
+)
+axs[2, 0].set_ylabel("Proba=1")
+axs[2, 0].set_xlabel("meanPosBias")
+axs[2, 0].set_title("Position" + " p=" + str("% 6.3f" % p_value), pad=20)
+
+slope, intercept, r_value, p_value, std_err = linregress(
+    df[(df.proba == 1) & (df.stdVeloBias <= 20)]["meanVeloBias"],
+    df[(df.proba == 1) & (df.stdVeloBias <= 20)]["stdVeloBias"],
+)
+axs[2, 1].scatter(
+    df[(df.proba == 1) & (df.stdPosBias <= 20)]["meanVeloBias"],
+    df[(df.proba == 1) & (df.stdPosBias <= 20)]["stdVeloBias"],
+)
+axs[2, 1].plot(
+    df[(df.proba == 1) & (df.stdPosBias <= 20)]["meanVeloBias"],
+    df[(df.proba == 1) & (df.stdPosBias <= 20)]["meanVeloBias"] * slope + intercept,
+    c="r",
+    alpha=0.5,
+)
+axs[2, 1].set_ylabel("stdVeloBias")
+axs[2, 1].set_xlabel("meanVeloBias")
+axs[2, 1].set_title("Velo" + " p=" + str("% 6.3f" % p_value), pad=20)
+
+
+fig.suptitle(
+    "Correlation between the mean and the standard deviation\n Bias Block  ",
+    fontsize=20,
+)
+fig.tight_layout()
+plt.savefig("CorrstdMeanProbasGlobalBias")
+
+# |%%--%%| <Y8F87eDkFJ|UqazWkki6n>
+
+sns.scatterplot(
+    data=df,
+    y="stdVeloNoBias",
+    x="meanVeloNoBias",
+    s=100,
+    hue="proba",
+)
+
+# |%%--%%| <UqazWkki6n|c5qCsEhHbw>
+
+sns.scatterplot(
+    data=df,
+    y="stdVeloBias",
+    x="meanVeloBias",
+    s=100,
+    hue="proba",
+)
+
+# |%%--%%| <c5qCsEhHbw|7dYxg59bZy>
+
+
+
+# |%%--%%| <7dYxg59bZy|jSlgvU9qIx>
+
 
