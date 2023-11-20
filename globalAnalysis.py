@@ -100,19 +100,6 @@ def from_header(header, field):
 def get_resolution(nonsample):
     res = [None, None]
     for pattern in ["DISPLAY_COORDS", "GAZE_COORDS", "RESOLUTION"]:
-        display_xy = [x for x in nonsample if pattern in x]
-        if len(display_xy) == 0:
-            continue
-        display_xy = re.sub(f".* {pattern}\\D+(.*)", "\\1", display_xy[0])
-        display_xy = [int(x) for x in re.split("\\s+", display_xy)]
-        res = [display_xy[2] - display_xy[0] + 1, display_xy[3] - display_xy[1] + 1]
-        break
-    return res
-
-
-def get_resolution(nonsample):
-    res = [None, None]
-    for pattern in ["DISPLAY_COORDS", "GAZE_COORDS", "RESOLUTION"]:
         display_xy = [s for s in nonsample if pattern in s]
         if len(display_xy) == 0:
             continue
@@ -528,7 +515,6 @@ path = "/Users/hamzahalloway/Nextcloud/Shared/HAMZA_PhD/Data/Probant_DevAsd/DATA
 #
 categories = sorted(os.listdir(path))
 allPaths = []
-categories
 subjects=[]
 for cat in categories:
     catPath = os.path.join(path, cat)
