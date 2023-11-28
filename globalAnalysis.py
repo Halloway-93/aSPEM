@@ -487,7 +487,7 @@ def drop_bad_trials(df,badTrials):
 
 
 
-path = "/Users/hamzahalloway/Nextcloud/Shared/HAMZA_PhD/Data/Probant_DevAsd/DATA/Controles/"
+path = "/Volumes/work/brainets/oueld.h/Probant_DevAsd/DATA/Controles/"
 
 # categories = np.sort([f for f in listdir(path)])
 # namesCat = []
@@ -522,10 +522,6 @@ for cat in categories:
     catPaths = [os.path.join(catPath, name, condition) for name in namesCat for condition in sorted(os.listdir(os.path.join(catPath, name)))]
     subjects.append([name for name in namesCat for condition in sorted(os.listdir(os.path.join(catPath, name)))])
     allPaths.append(catPaths)
-
-# |%%--%%| <U2MWnLLLwV|ArbOSJQbFM>
-
-len(subjects)
 
 # |%%--%%| <ArbOSJQbFM|hXqzQhq96H>
 
@@ -738,10 +734,10 @@ for path in allPaths:
             pos[(pos > 3) | (pos < -3)] = np.nan
 
         # mean pos on bias and non bias trials for time window 80,120
-        meanPos.append(np.mean(pos, axis=1))
+        meanPos.append(np.nanmean(pos, axis=1))
 
         # mean of velocity on bias and non bias trials
-        meanVelo.append(np.mean(velo, axis=1))
+        meanVelo.append(np.nanmean(velo, axis=1))
 
         # var of velocity on bias and non bias trials
         stdVelo.append(np.std(velo, axis=1))
